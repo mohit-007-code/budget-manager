@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Budget Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header with Month/Year Selector -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center mb-3 mb-md-4 gap-3">
+        <div>
+            <h1 class="display-6 display-md-5 fw-bold mb-2">Dashboard</h1>
+            <span class="month-header">
+                <i class="bi bi-calendar3"></i> {{ current_month }} {{ current_year }}
+            </span>
+        </div>
+        
+        <!-- Month/Year Selector & PDF Download -->
+        <div class="w-100 w-lg-auto">
+            <form class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2" method="get" action="">
+                <select id="sel-month" name="month" class="form-select form-select-sm">
+                    {% for num, name in months %}
+                        <option value="{{ num }}" {% if num == selected_month %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+                
+                <select id="sel-year" name="year" class="form-select form-select-sm">
+                    {% for y in available_years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                
+                <button type="submit" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-eye"></i> View
+                </button>
+                
+                <button type="button" class="btn btn-primary btn-sm" onclick="downloadPdf()">
+                    <i class="bi bi-download"></i> PDF
+                </button>
+                
+                <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm ms-1 js-logout-link" role="button">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats Cards (Income, Expenses, Balance Left) -->
+    <div class="row g-3 g-md-4 mb-3 mb-md-4">
+        <!-- Income Card -->
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="stat-card income scale-in" style="animation-delay: 0.1s;">
+                <div class="stat-label">Income</div>
+                <div class="stat-value text-success">₹{{ total_income|floatformat:0 }}</div>
+                <i class="bi bi-arrow-up-circle stat-icon text-success"></i>
+            </div>
+        </div>
+
+        <!-- Expenses Card -->
+        <div class="col-12 col-sm-6 col-md-4">
+            <div class="stat-card expense scale-in" style="animation-delay: 0.2s;">
+                <div class="stat-label">Expenses</div>
+                <div class="stat-value text-danger">₹{{ total_expenses|floatformat:0 }}</div>
+                <i class="bi bi-arrow-down-circle stat-icon text-danger"></i>
+            </div>
+        </div>
+
+        <!-- Balance Left Card -->
+        <div class="col-12 col-sm-12 col-md-4">
+            <div class="stat-card scale-in" style="animation-delay: 0.3s;">
+                <div class="stat-label">Balance Left</div>
+                <div class="stat-value {% if remaining >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ₹{{ remaining|floatformat:0 }}
+                </div>
+                <i class="bi bi-wallet2 stat-icon {% if remaining >= 0 %}text-success{% else %}text-danger{% endif %}"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row g-3 g-md-4">
+        <!-- Left Column: This Month & Last Month -->
+        <div class="col-12 col-lg-6">
+            <div class="card scale-in" style="animation-delay: 0.4s;">
+                <div class="card-body p-3 p-md-4">
+                    <div class="row g-3">
+                        <!-- This Month -->
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 rounded this-month-card">
+                                <h6 class="text-primary fw-bold mb-3 fs-6">
+                                    <i class="bi bi-calendar-check"></i> THIS MONTH
+                                </h6>
+                                <div class="mb-2">
+                                    <small class="text-muted d-block">Balance Left</small>
+                                    <h5 class="fw-bold mb-0 fs-6 fs-md-5 {% if remaining >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        ₹{{ remaining|floatformat:0 }}
+                                    </h5>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Total Spent</small>
+                                    <h5 class="fw-bold mb-0 fs-6 fs-md-5 text-danger">₹{{ total_expenses|floatformat:0 }}</h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Month -->
+                        <div class="col-12 col-md-6">
+                            <div class="p-3 rounded last-month-card">
+                                <h6 class="text-secondary fw-bold mb-3 fs-6">
+                                    <i class="bi bi-calendar-x"></i> LAST MONTH
+                                </h6>
+                                {% if request.user.expenses.exists %}
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">View Details</small>
+                                        <h6 class="fw-bold mb-0">
+                                            <a href="{% url 'compare_months' %}" class="text-decoration-none text-primary">
+                                                Full Report <i class="bi bi-arrow-right"></i>
+                                            </a>
+                                        </h6>
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted mb-2 small">No data available</p>
+                                {% endif %}
+                                <div>
+                                    <small class="text-muted d-block">Compare</small>
+                                    <h6 class="fw-bold mb-0">
+                                        <a href="{% url 'compare_months' %}" class="text-decoration-none text-primary">
+                                            View Comparison <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: List of Current Month Expenses -->
+        <div class="col-12 col-lg-6">
+            <div class="card scale-in" style="animation-delay: 0.5s;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-ul"></i> Current Month Expenses
+                    </h6>
+                    <a href="{% url 'all_expenses' %}" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body p-2 p-md-3" style="overflow-y: auto; max-height: 400px;">
+                    {% if recent_expenses %}
+                        {% for expense in recent_expenses %}
+                        <div class="expense-item p-2 p-md-3 mb-2 rounded">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div style="flex: 1; min-width: 0;">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <small class="text-muted" style="font-size: 0.75rem;">
+                                            <i class="bi bi-calendar3"></i> 
+                                            {{ expense.date|date:"d M, Y" }}
+                                        </small>
+                                    </div>
+                                    <h6 class="mb-1 fw-bold text-truncate" style="font-size: 0.9rem;">
+                                        {{ expense.category.get_name_display|upper }}
+                                    </h6>
+                                    <p class="mb-0 text-truncate" style="font-size: 0.85rem;">
+                                        {{ expense.title }}
+                                    </p>
+                                    {% if expense.description %}
+                                    <small class="text-muted d-none d-md-block">{{ expense.description|truncatewords:8 }}</small>
+                                    {% endif %}
+                                </div>
+                                <div class="text-end" style="white-space: nowrap;">
+                                    <h6 class="mb-0 text-danger fw-bold">₹{{ expense.amount|floatformat:0 }}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if recent_expenses|length > 3 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Scroll to see more</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-inbox text-muted" style="font-size: 2.5rem;"></i>
+                            <h6 class="mt-3 text-muted">No expenses this month</h6>
+                            <p class="text-muted small">Start tracking by adding an expense!</p>
+                            <a href="{% url 'add_expense' %}" class="btn btn-danger btn-sm mt-2">
+                                <i class="bi bi-plus-circle"></i> Add Expense
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* This Month & Last Month Cards */
+    .this-month-card {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6;
+    }
+    
+    .last-month-card {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border: 2px solid #6b7280;
+    }
+    
+    /* Expense Item Styling */
+    .expense-item {
+        background: var(--bg-tertiary);
+        border-left: 4px solid var(--danger-color);
+        transition: all 0.3s ease;
+    }
+    
+    /* Mobile Responsive Styles */
+    @media (max-width: 767px) {
+        .display-6 {
+            font-size: 1.5rem;
+        }
+        
+        .month-header {
+            font-size: 0.8rem;
+            padding: 0.4rem 1rem;
+        }
+        
+        .stat-card {
+            padding: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+        }
+        
+        .form-select-sm {
+            font-size: 0.85rem;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+    }
+    
+    @media (min-width: 768px) {
+        .display-md-5 {
+            font-size: 2.5rem;
+        }
+        
+        .fs-md-5 {
+            font-size: 1.25rem;
+        }
+    }
+    
+    /* Hover effects - Desktop only */
+    @media (min-width: 992px) {
+        .expense-item:hover {
+            transform: translateX(5px);
+            background: #e0e7ff !important;
+            box-shadow: var(--shadow-md);
+        }
+    }
+    
+    /* Tap effect - Mobile only */
+    @media (max-width: 991px) {
+        .expense-item:active {
+            transform: scale(0.98);
+            background: #e0e7ff !important;
+        }
+    }
+</style>
+
+<script>
+    function downloadPdf() {
+        const m = document.getElementById('sel-month').value;
+        const y = document.getElementById('sel-year').value;
+        const url = `{% url 'monthly_report_pdf' %}` + `?month=${m}&year=${y}`;
+        window.location.href = url;
+    }
+    
+    // Add stagger animation to expense items
+    document.addEventListener('DOMContentLoaded', function() {
+        const items = document.querySelectorAll('.expense-item');
+        items.forEach((item, index) => {
+            item.style.animationDelay = `${0.6 + (index * 0.05)}s`;
+            item.classList.add('fade-in');
+        });
+    });
+</script>
+{% endblock %}

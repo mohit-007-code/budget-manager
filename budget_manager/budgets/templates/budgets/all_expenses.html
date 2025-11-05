@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}All Expenses - Budget Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-md-4 gap-2">
+        <div>
+            <h1 class="display-6 display-md-5 fw-bold mb-1">All Expenses</h1>
+            <p class="text-muted mb-0 fs-6 fs-md-5">
+                Total: <strong class="text-danger">₹{{ total_expenses|floatformat:2 }}</strong>
+            </p>
+        </div>
+        <a href="{% url 'add_expense' %}" class="btn btn-danger btn-add">
+            <i class="bi bi-plus-circle"></i> 
+            <span class="d-none d-sm-inline">Add Expense</span>
+            <span class="d-inline d-sm-none">Add</span>
+        </a>
+    </div>
+
+    <!-- Expenses Table/Cards -->
+    <div class="card scale-in">
+        <div class="card-body p-0">
+            {% if expenses %}
+                <!-- Desktop Table View -->
+                <div class="table-responsive d-none d-lg-block">
+                    <table class="table table-hover mb-0">
+                        <thead style="background: var(--bg-tertiary);">
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                                <th>Description</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>
+                                    <i class="bi bi-calendar3 text-muted"></i>
+                                    {{ expense.date|date:"M d, Y" }}
+                                </td>
+                                <td><strong>{{ expense.title }}</strong></td>
+                                <td>
+                                    <span class="badge bg-primary">{{ expense.category.get_name_display }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-danger">₹{{ expense.amount|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ expense.description|default:"—"|truncatewords:10 }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'delete_expense' expense.id %}"
+                                       class="btn btn-sm btn-outline-danger js-delete-link"
+                                       data-title="{{ expense.title|escapejs }}"
+                                       data-amount="{{ expense.amount|floatformat:2 }}">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="d-block d-lg-none p-2">
+                    {% for expense in expenses %}
+                    <div class="expense-card mb-3 p-3 rounded" style="background: var(--bg-tertiary); border-left: 4px solid var(--danger-color); transition: all 0.2s ease;">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div style="flex: 1; min-width: 0;">
+                                <h6 class="mb-1 fw-bold text-truncate">{{ expense.title }}</h6>
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3"></i> 
+                                        {{ expense.date|date:"d M, Y" }}
+                                    </small>
+                                    <span class="badge bg-primary" style="font-size: 0.7rem;">
+                                        {{ expense.category.get_name_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <h5 class="mb-0 text-danger fw-bold ms-2" style="white-space: nowrap;">
+                                ₹{{ expense.amount|floatformat:0 }}
+                            </h5>
+                        </div>
+                        
+                        {% if expense.description %}
+                        <p class="text-muted mb-2 small">
+                            {{ expense.description|truncatewords:15 }}
+                        </p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'delete_expense' expense.id %}"
+                               class="btn btn-sm btn-outline-danger js-delete-link"
+                               data-title="{{ expense.title|escapejs }}"
+                               data-amount="{{ expense.amount|floatformat:2 }}">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5 px-3">
+                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 text-muted fs-5">No expenses yet</h4>
+                    <p class="text-muted">Start tracking your expenses by adding one!</p>
+                    <a href="{% url 'add_expense' %}" class="btn btn-danger mt-3">
+                        <i class="bi bi-plus-circle"></i> Add Your First Expense
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Mobile responsive styles */
+    @media (max-width: 767px) {
+        .display-6 {
+            font-size: 1.5rem;
+        }
+        
+        .btn-add {
+            width: 100%;
+            padding: 0.75rem;
+        }
+    }
+    
+    @media (min-width: 768px) {
+        .display-md-5 {
+            font-size: 2.5rem;
+        }
+        
+        .fs-md-5 {
+            font-size: 1rem;
+        }
+    }
+    
+    /* Expense card hover effect */
+    @media (min-width: 992px) {
+        .expense-card:hover {
+            transform: translateX(5px);
+            background: #fee2e2 !important;
+            box-shadow: var(--shadow-md);
+        }
+    }
+    
+    /* Mobile card tap effect */
+    @media (max-width: 991px) {
+        .expense-card:active {
+            transform: scale(0.98);
+            background: #fee2e2 !important;
+        }
+    }
+    
+    /* Table responsive improvements */
+    @media (min-width: 992px) and (max-width: 1199px) {
+        .table thead th,
+        .table tbody td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<script>
+    // Add stagger animation to mobile cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.expense-card');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.05}s`;
+            card.classList.add('fade-in');
+        });
+    });
+    
+    // No per-template native confirm; use global modal for delete confirmation
+</script>
+{% endblock %}

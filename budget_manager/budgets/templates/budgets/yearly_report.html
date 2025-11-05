@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Yearly Report {{ year }} - Budget Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 fw-bold mb-2">Yearly Report</h1>
+            <span class="month-header">
+                <i class="bi bi-calendar-year"></i> Year {{ year }}
+            </span>
+        </div>
+        <div>
+            <select class="form-select" onchange="window.location.href='{% url 'yearly_report' %}' + this.value + '/'">
+                {% for y in available_years %}
+                <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card income scale-in">
+                <div class="stat-label">Total Income</div>
+                <div class="stat-value text-success">₹{{ yearly_income|floatformat:0 }}</div>
+                <i class="bi bi-arrow-up-circle stat-icon text-success"></i>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card expense scale-in" style="animation-delay: 0.1s;">
+                <div class="stat-label">Total Expenses</div>
+                <div class="stat-value text-danger">₹{{ yearly_expenses|floatformat:0 }}</div>
+                <i class="bi bi-arrow-down-circle stat-icon text-danger"></i>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="stat-card scale-in" style="animation-delay: 0.2s;">
+                <div class="stat-label">Net Balance</div>
+                <div class="stat-value {% if yearly_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ₹{{ yearly_balance|floatformat:0 }}
+                </div>
+                <i class="bi bi-wallet2 stat-icon {% if yearly_balance >= 0 %}text-success{% else %}text-danger{% endif %}"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4">
+        <!-- Expenses by Category -->
+        <div class="col-lg-6">
+            <div class="card scale-in" style="animation-delay: 0.3s;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Expenses by Category
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if expenses_by_category %}
+                        {% for expense in expenses_by_category %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-primary">{{ expense.category__name|title }}</span>
+                                <strong class="text-danger">₹{{ expense.total|floatformat:0 }}</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: {% widthratio expense.total yearly_expenses 100 %}%; transition: width 1.5s ease;">
+                                    {% widthratio expense.total yearly_expenses 100 %}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No expenses for this year.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Breakdown -->
+        <div class="col-lg-6">
+            <div class="card scale-in" style="animation-delay: 0.4s;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-month"></i> Monthly Breakdown
+                    </h5>
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-end">Income</th>
+                                    <th class="text-end">Expenses</th>
+                                    <th class="text-end">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in monthly_data %}
+                                <tr>
+                                    <td><strong>{{ data.month }}</strong></td>
+                                    <td class="text-end text-success">₹{{ data.income|floatformat:0 }}</td>
+                                    <td class="text-end text-danger">₹{{ data.expenses|floatformat:0 }}</td>
+                                    <td class="text-end {% if data.balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        ₹{{ data.balance|floatformat:0 }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

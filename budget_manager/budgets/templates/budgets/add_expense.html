@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Add Expense - Budget Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Header -->
+    <div class="mb-3 mb-md-4">
+        <h1 class="display-6 display-md-5 fw-bold mb-2">Add New Expense</h1>
+        <span class="month-header">
+            <i class="bi bi-calendar3"></i> {{ current_month|default:"Current Month" }}
+        </span>
+    </div>
+
+    <div class="row g-3 g-lg-4">
+        <!-- Form Section -->
+        <div class="col-12 col-lg-8">
+            <div class="card scale-in">
+                <div class="card-header">
+                    <h5 class="mb-0 fs-6 fs-md-5">
+                        <i class="bi bi-plus-circle"></i> New Expense
+                    </h5>
+                </div>
+                <div class="card-body p-3 p-md-4">
+                    <form method="post" id="expenseForm">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Category Selection -->
+                            <div class="col-12 col-md-6">
+                                <label for="category" class="form-label">
+                                    <i class="bi bi-tag"></i> Category *
+                                </label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Choose category...</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.get_name_display }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Date Selection -->
+                            <div class="col-12 col-md-6">
+                                <label for="date" class="form-label">
+                                    <i class="bi bi-calendar-event"></i> Date *
+                                </label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                            </div>
+
+                            <!-- Amount & Title -->
+                            <div class="col-12 col-md-6">
+                                <label for="amount" class="form-label">
+                                    <i class="bi bi-currency-rupee"></i> Amount *
+                                </label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       step="0.01" placeholder="₹0.00" required inputmode="decimal">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="title" class="form-label">
+                                    <i class="bi bi-pencil"></i> Title *
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       placeholder="e.g., Coffee" required>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="col-12">
+                                <label for="description" class="form-label">
+                                    <i class="bi bi-chat-left-text"></i> Description (Optional)
+                                </label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="3" placeholder="Additional details..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-check-circle"></i> Add Expense
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Expenses List -->
+        <div class="col-12 col-lg-4">
+            <div class="card scale-in" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Recent Expenses
+                    </h6>
+                </div>
+                <div class="card-body p-2 p-md-3" style="max-height: 400px; overflow-y: auto;">
+                    {% if recent_expenses %}
+                        {% for expense in recent_expenses|slice:":5" %}
+                        <div class="p-2 mb-2 rounded" style="background: var(--bg-tertiary); border-left: 3px solid var(--danger-color); transition: all 0.2s ease;">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div style="flex: 1; min-width: 0;">
+                                    <small class="text-muted d-block" style="font-size: 0.75rem;">
+                                        {{ expense.date|date:"d/m/Y" }} • {{ expense.category.get_name_display }}
+                                    </small>
+                                    <strong class="d-block text-truncate" style="font-size: 0.9rem;">
+                                        {{ expense.title }}
+                                    </strong>
+                                </div>
+                                <span class="badge bg-danger" style="white-space: nowrap; font-size: 0.75rem;">
+                                    ₹{{ expense.amount|floatformat:0 }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-inbox text-muted" style="font-size: 2.5rem;"></i>
+                            <p class="text-muted mb-0 mt-2" style="font-size: 0.9rem;">No recent expenses</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Mobile specific styles */
+    @media (max-width: 767px) {
+        .display-6 {
+            font-size: 1.5rem;
+        }
+        
+        .month-header {
+            font-size: 0.8rem;
+            padding: 0.4rem 1rem;
+        }
+        
+        .card-header h5 {
+            font-size: 1rem;
+        }
+        
+        .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
+        }
+        
+        .form-control,
+        .form-select {
+            font-size: 0.95rem;
+            padding: 0.7rem 0.9rem;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+        }
+    }
+    
+    @media (min-width: 768px) {
+        .display-md-5 {
+            font-size: 2.5rem;
+        }
+        
+        .fs-md-5 {
+            font-size: 1.25rem;
+        }
+    }
+    
+    /* Hover effect for recent expenses on desktop */
+    @media (min-width: 768px) {
+        .p-2.mb-2.rounded:hover {
+            transform: translateX(5px);
+            background: #e0e7ff !important;
+            box-shadow: var(--shadow-md);
+        }
+    }
+</style>
+
+<script>
+    // Set today's date as default
+    document.getElementById('date').valueAsDate = new Date();
+    
+    // Add animation on form submit
+    document.getElementById('expenseForm').addEventListener('submit', function(e) {
+        const btn = this.querySelector('button[type="submit"]');
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+        btn.disabled = true;
+    });
+    
+    // Prevent double submission
+    let isSubmitting = false;
+    document.getElementById('expenseForm').addEventListener('submit', function(e) {
+        if (isSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+        isSubmitting = true;
+    });
+</script>
+{% endblock %}

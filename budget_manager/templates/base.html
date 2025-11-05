@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Budget Manager{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS with Zinc Light Theme -->
+    <style>
+        :root {
+            /* Zinc Light Theme Colors */
+            --zinc-50: #fafafa;
+            --zinc-100: #f4f4f5;
+            --zinc-200: #e4e4e7;
+            --zinc-300: #d4d4d8;
+            --zinc-400: #a1a1aa;
+            --zinc-500: #71717a;
+            --zinc-600: #52525b;
+            --zinc-700: #3f3f46;
+            --zinc-800: #27272a;
+            --zinc-900: #18181b;
+            
+            /* Accent Colors */
+            --primary-color: #3b82f6;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            
+            /* Theme Variables */
+            --bg-primary: var(--zinc-50);
+            --bg-secondary: #ffffff;
+            --bg-tertiary: var(--zinc-100);
+            --text-primary: var(--zinc-900);
+            --text-secondary: var(--zinc-600);
+            --text-muted: var(--zinc-400);
+            --border-color: var(--zinc-200);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --shadow-float: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            padding-bottom: 100px; /* Space for mobile floating nav */
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* slide up but preserve horizontal centering (keeps translateX(-50%) intact) */
+        @keyframes slideUpCenter {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .scale-in {
+            animation: scaleIn 0.4s ease-out forwards;
+        }
+
+        /* Desktop Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 0;
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-brand {
+            padding: 0 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-brand h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav {
+            padding: 0 1rem;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .sidebar-nav-item:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transform: translateX(5px);
+        }
+
+        .sidebar-nav-item.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-nav-item i {
+            width: 24px;
+            margin-right: 0.875rem;
+            font-size: 1.25rem;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 0;
+            right: 0;
+            padding: 0 1rem;
+        }
+
+        /* FLOATING BOTTOM NAVIGATION - OpenCircle Style */
+        .mobile-floating-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border-radius: 30px;
+            padding: 0.75rem 1rem;
+            display: none;
+            z-index: 1000;
+            box-shadow: var(--shadow-float);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            /* Use center-preserving slide-up so the element stays horizontally centered while animating */
+            animation: slideUpCenter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 90%;
+            width: auto;
+            /* keep layout stable when active items expand */
+            white-space: nowrap;
+        }
+
+        /* Fixed logout button for mobile (top-right) */
+        .logout-fixed {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 1102;
+            border-radius: 10px;
+            padding: 0.45rem 0.6rem;
+            display: none; /* shown on small screens via utility class d-lg-none */
+        }
+
+        .mobile-nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            padding: 0.625rem 0.875rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 60px;
+            position: relative;
+        }
+
+        .mobile-nav-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-color);
+            border-radius: 20px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mobile-nav-item:active {
+            transform: scale(0.95);
+        }
+
+        .mobile-nav-item.active {
+            color: white;
+        }
+
+        .mobile-nav-item.active::before {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .mobile-nav-item i {
+            font-size: 1.4rem;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-item.active i {
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .mobile-nav-item span {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* Floating effect */
+        .mobile-floating-nav:hover {
+            transform: translateX(-50%) translateY(-2px);
+            box-shadow: 0 15px 50px -15px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            position: relative;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            width: 8px;
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-5px);
+        }
+
+        .stat-card.income::before {
+            background: var(--success-color);
+        }
+
+        .stat-card.expense::before {
+            background: var(--danger-color);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            line-height: 1;
+        }
+
+        .stat-icon {
+            position: absolute;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            opacity: 0.1;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover .stat-icon {
+            opacity: 0.2;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Form Controls */
+        .form-control, .form-select {
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Table */
+        .table {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .table tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* Alerts */
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            animation: slideUp 0.4s ease-out;
+            box-shadow: var(--shadow-md);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+        }
+
+        /* Month Header */
+        .month-header {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+                padding-bottom: 100px;
+            }
+
+            .mobile-floating-nav {
+                display: block;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-icon {
+                font-size: 2rem;
+            }
+
+            body {
+                padding-bottom: 100px;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .btn {
+                padding: 0.625rem 1.25rem;
+                font-size: 0.9rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .display-5 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-content {
+                padding: 0.75rem;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .mobile-nav-item {
+                min-width: 55px;
+                padding: 0.5rem 0.75rem;
+            }
+
+            .mobile-nav-item i {
+                font-size: 1.3rem;
+            }
+
+            .mobile-nav-item span {
+                font-size: 0.6rem;
+            }
+
+            .mobile-floating-nav {
+                bottom: 15px;
+                padding: 0.625rem 0.875rem;
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+        /* Very Small Devices */
+        @media (max-width: 380px) {
+            .mobile-nav-item span {
+                display: none;
+            }
+
+            .mobile-nav-item {
+                padding: 0.75rem;
+            }
+
+            .mobile-floating-nav {
+                max-width: 95%;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--zinc-300);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--zinc-400);
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Desktop Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h3>
+                <i class="bi bi-wallet2"></i>
+                Budget Manager
+            </h3>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="{% url 'dashboard' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="{% url 'add_income' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'add_income' %}active{% endif %}">
+                <i class="bi bi-plus-circle"></i> Add Income
+            </a>
+            <a href="{% url 'add_expense' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'add_expense' %}active{% endif %}">
+                <i class="bi bi-dash-circle"></i> Add Expense
+            </a>
+            <a href="{% url 'all_incomes' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'all_incomes' %}active{% endif %}">
+                <i class="bi bi-cash-stack"></i> All Incomes
+            </a>
+            <a href="{% url 'all_expenses' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'all_expenses' %}active{% endif %}">
+                <i class="bi bi-receipt"></i> All Expenses
+            </a>
+            <a href="{% url 'compare_months' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'compare_months' %}active{% endif %}">
+                <i class="bi bi-graph-up"></i> Compare
+            </a>
+            <a href="{% url 'yearly_report' %}" class="sidebar-nav-item {% if request.resolver_match.url_name == 'yearly_report' %}active{% endif %}">
+                <i class="bi bi-calendar-year"></i> Yearly Report
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="{% url 'accounts:logout' %}" class="sidebar-nav-item js-logout-link">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- FLOATING BOTTOM NAVIGATION - OpenCircle Style -->
+    <nav class="mobile-floating-nav">
+        <div class="mobile-nav-container">
+            <a href="{% url 'dashboard' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-house-fill"></i>
+                <span>Home</span>
+            </a>
+            <a href="{% url 'add_income' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'add_income' %}active{% endif %}">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Income</span>
+            </a>
+            <a href="{% url 'all_incomes' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'all_incomes' %}active{% endif %}">
+                <i class="bi bi-cash-stack-fill"></i>
+                <span>All Income</span>
+            </a>
+            <a href="{% url 'add_expense' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'add_expense' %}active{% endif %}">
+                <i class="bi bi-dash-circle-fill"></i>
+                <span>Expense</span>
+            </a>
+            <a href="{% url 'yearly_report' %}" class="mobile-nav-item {% if request.resolver_match.url_name == 'yearly_report' %}active{% endif %}">
+                <i class="bi bi-bar-chart-fill"></i>
+                <span>Reports</span>
+            </a>
+            <!-- logout moved to top-right fixed button on mobile -->
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Mobile fixed logout button (top-right of viewport) -->
+    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm logout-fixed d-lg-none js-logout-link" title="Logout">
+        <i class="bi bi-box-arrow-right"></i>
+    </a>
+
+    <!-- Main Content -->
+    <div class="{% if user.is_authenticated %}main-content{% else %}container{% endif %}">
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}x-circle{% else %}info-circle{% endif %}-fill me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Add stagger animation to elements
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.card, .stat-card');
+            elements.forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+                el.classList.add('fade-in');
+            });
+        });
+
+        // Auto dismiss alerts
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+    
+    <!-- Global Delete Confirmation Modal (moved inside body) -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title d-flex align-items-center" id="confirmDeleteLabel">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Confirm Delete
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p id="confirmDeleteMessage">Are you sure you want to delete this item?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // Global delete modal handler
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteModalEl = document.getElementById('confirmDeleteModal');
+            if (!deleteModalEl) return;
+            const deleteModal = new bootstrap.Modal(deleteModalEl);
+            let targetHref = null;
+
+            document.body.addEventListener('click', function (e) {
+                const btn = e.target.closest('.js-delete-link');
+                if (!btn) return;
+                e.preventDefault();
+                // Read attributes
+                const title = btn.getAttribute('data-title') || '';
+                const amount = btn.getAttribute('data-amount') || '';
+                targetHref = btn.getAttribute('href');
+
+                const msgEl = document.getElementById('confirmDeleteMessage');
+                let message = 'Are you sure you want to delete this item?';
+                if (title && amount) {
+                    message = `Are you sure you want to delete "${title}" (₹${amount})?`;
+                } else if (title) {
+                    message = `Are you sure you want to delete "${title}"?`;
+                }
+                msgEl.textContent = message;
+                deleteModal.show();
+            });
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+                if (!targetHref) return;
+                // Navigate to the delete URL (keeps existing behavior). If you prefer POST, we can change to a form submit.
+                window.location.href = targetHref;
+            });
+        });
+    </script>
+
+        <!-- Logout Confirmation Modal -->
+        <div class="modal fade" id="confirmLogoutModal" tabindex="-1" aria-labelledby="confirmLogoutLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title d-flex align-items-center" id="confirmLogoutLabel">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                Confirm Logout
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="confirmLogoutMessage">Do you want to logout now?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="confirmLogoutBtn" class="btn btn-primary">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+                // Global logout modal handler
+                document.addEventListener('DOMContentLoaded', function () {
+                        const logoutModalEl = document.getElementById('confirmLogoutModal');
+                        if (!logoutModalEl) return;
+                        const logoutModal = new bootstrap.Modal(logoutModalEl);
+                        let logoutHref = null;
+
+                        document.body.addEventListener('click', function (e) {
+                                const btn = e.target.closest('.js-logout-link');
+                                if (!btn) return;
+                                e.preventDefault();
+                                logoutHref = btn.getAttribute('href');
+                                const msgEl = document.getElementById('confirmLogoutMessage');
+                                // Optionally customize message
+                                msgEl.textContent = 'Are you sure you want to log out?';
+                                logoutModal.show();
+                        });
+
+                        document.getElementById('confirmLogoutBtn').addEventListener('click', function () {
+                                if (!logoutHref) return;
+                                // Navigate to logout URL
+                                window.location.href = logoutHref;
+                        });
+                });
+        </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
